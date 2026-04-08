@@ -32,6 +32,12 @@ async function forward(request, reply, targetUrl) {
 }
 
 app.get('/healthz', async () => ({ ok: true }));
+app.get('/', async () => ({
+  ok: true,
+  service: 'blockex-listener',
+  endpoints: ['/inbound/deposit', '/inbound/withdrawal', '/healthz'],
+}));
+
 
 // SendGrid Inbound Parse targets
 app.post('/inbound/deposit', async (request, reply) => forward(request, reply, DEPOSIT_URL));
