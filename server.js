@@ -2,6 +2,12 @@ import Fastify from 'fastify';
 
 const app = Fastify({ logger: true });
 
+// SendGrid Inbound Parse posts multipart/form-data. Fastify returns 415 unless we register a parser.
+// We don't parse fields here; we just allow the request through and stream it onward.
+app.addContentTypeParser(/^multipart\/form-data(?:;.*)?$/i, { parseAs: 'stream' }, (_req, payload, done) => {
+  done(null, payload);
+});
+
 const KEY = (process.env.SENDGRID_WEBHOOK_VERIFICATION_KEY || '').trim();
 const DEPOSIT_URL = (process.env.DEPOSIT_LISTENER_URL || '').trim();
 const WITHDRAWAL_URL = (process.env.WITHDRAWAL_LISTENER_URL || '').trim();
