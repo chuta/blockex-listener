@@ -3,8 +3,8 @@ import Fastify from 'fastify';
 const app = Fastify({ logger: true });
 
 // SendGrid Inbound Parse posts multipart/form-data. Fastify returns 415 unless we register a parser.
-// We don't parse fields here; we just allow the request through and stream it onward.
-app.addContentTypeParser(/^multipart\/form-data(?:;.*)?$/i, { parseAs: 'stream' }, (_req, payload, done) => {
+// We don't parse fields here; we just accept the body as raw bytes and forward it onward.
+app.addContentTypeParser(/^multipart\/form-data(?:;.*)?$/i, { parseAs: 'buffer' }, (_req, payload, done) => {
   done(null, payload);
 });
 
@@ -20,6 +20,8 @@ async function forward(request, reply, targetUrl) {
   const contentType = request.headers['content-type'] || 'application/octet-stream';
   const userAgent = request.headers['user-agent'] || 'blockex-listener/1.0';
 
+  const body = request.body ?? request.raw;
+
   const res = await fetch(targetUrl, {
     method: 'POST',
     headers: {
@@ -27,7 +29,7 @@ async function forward(request, reply, targetUrl) {
       'user-agent': userAgent,
       'x-webhook-key': KEY,
     },
-    body: request.raw,
+    body,
   });
 
   const text = await res.text();
